@@ -1,0 +1,1 @@
+from ColorsOfBerlin.__main__ import main
