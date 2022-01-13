@@ -24,5 +24,7 @@ pip-delete-this-directory.txt
 
 # Files
 notes.md
-palette.packagingtemp.jpg
+.DS_Store
+palette.png
+temp.jpg
 ColorsOfBerlin/credentials.py
