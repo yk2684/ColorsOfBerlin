@@ -5,16 +5,17 @@ Yukino Kondo
 """
 
 import credentials
-import math
 import urllib.request
 from datetime import datetime
 import cloudinary.uploader
 import cloudinary
-from colorthief import ColorThief
 from PIL import Image, ImageDraw
 import json
 import requests
 import smtplib
+from sklearn.cluster import KMeans
+import cv2 as cv
+import numpy as np
 
 # Configuration for the Cloudinary platform
 cloudinary.config(
@@ -47,14 +48,34 @@ def rgb_to_hex(tuple):
     return '#%02x%02x%02x' % (tuple)
 
 
+def extract_dom_colors(img, color_count):
+    # Read in image
+    img = cv.imread(img)
+    # Convert image from BGR to RGB for color quantization
+    img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+    # Reshape the image to be a list of pixels
+    X = img.reshape((-1, 3))
+    # Using KMeans to cluster the color intensities
+    km = KMeans(n_clusters=color_count)
+    km.fit(X)
+    # Get number of colors
+    palette = len(np.unique(km.labels_))
+    # Create a histogram of the number of pixels assigned to each cluster
+    hist, bins = np.histogram(km.labels_, bins=np.arange(0, palette + 1))
+    # Convert to float to divide a float from the array
+    hist = hist.astype('float64')
+    # Normalize histogram to get the percentage of a color/cluster present in image
+    hist /= hist.sum()
+
+    return hist, palette, km.cluster_centers_
+
+
 def create_palette(img):
-    # Using the color thief package, get dominant colors from an image
-    color_thief = ColorThief(img)
-    palette = color_thief.get_palette(color_count=5)
+    hist, palette, cluster_centers = extract_dom_colors(img, 5)
 
     # Preparing canvas
     size = 200
-    columns = len(palette)
+    columns = palette
     width = int(columns * size)
     height = int(columns * size)
     result = Image.new("RGBA", (width, height), (0, 0, 0, 0))
@@ -63,12 +84,21 @@ def create_palette(img):
 
     hex_arr = []
 
-    # Drawing on canvas
-    for i, color in enumerate(palette):
+    for i, (percent, color) in enumerate(zip(hist, cluster_centers)):
+        # Convert numpy array to a tuple
+        color = tuple(map(int, color))
         hex_arr.append(rgb_to_hex(color))
-        x = int((i % columns) * size)
-        y = int(math.floor(i / columns) * size)
-        canvas.rectangle([(x, y), (x + size - 1, height)],
+        # The idea is to increase width of color based on their percentage present in image
+        # The most dominant color in the image will have a wider width on canvas
+        percent_width = int(percent * width)
+        endY = height
+        if i == 0:
+            startX = 0
+            startY = 0
+        else:
+            startX = endX
+        endX = startX + percent_width
+        canvas.rectangle([(startX, startY), (endX, endY)],
                          fill=color, outline=(255, 255, 255))
 
     result.save('palette.png')
@@ -153,7 +183,7 @@ def main():
         print('Success!!')
 
     except Exception as e:
-        send_email('Colors of Berlin Failed', 'Go check on it')
+        send_email('Colors of Berlin Failed', e)
         print(e)
 
 
