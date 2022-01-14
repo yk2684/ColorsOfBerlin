@@ -26,7 +26,7 @@ cloudinary.config(
 
 
 def pull_image():
-    url = 'https://api.windy.com/api/webcams/v2/list/webcam=1260635090?show=webcams:image'
+    url = 'https://api.windy.com/api/webcams/v2/list/webcam=1641364745?show=webcams:image'
     headers = {'x-windy-key': credentials.api_key}
 
     req = requests.get(url, headers=headers)

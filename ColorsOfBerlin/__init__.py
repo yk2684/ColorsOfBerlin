@@ -1,1 +1,1 @@
-from ColorsOfBerlin.__main__ import main
+from ColorsOfBerlin.main import main
