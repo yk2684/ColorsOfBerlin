@@ -16,6 +16,7 @@ import smtplib
 from sklearn.cluster import KMeans
 import cv2 as cv
 import numpy as np
+import os
 
 # Configuration for the Cloudinary platform
 cloudinary.config(
@@ -33,12 +34,16 @@ def pull_image():
 
     # Pulling URL for the latest daylight image from the Berlin - Potsdamer Platz webcam
     daylight_image = req.json(
-    )['result']['webcams'][0]['image']['daylight']['preview']
+    )['result']['webcams'][0]['image']['current']['preview']
 
     URL = daylight_image
 
+    #file_name_org_img = datetime.today().strftime('%Y-%m-%d') + '.jpg'
+
+    absolute_path = os.path.abspath('temp.jpg')
+
     with urllib.request.urlopen(URL) as url:
-        with open('temp.jpg', 'wb') as f:
+        with open(absolute_path, 'wb') as f:
             f.write(url.read())
 
     return f.name
@@ -101,7 +106,9 @@ def create_palette(img):
         canvas.rectangle([(startX, startY), (endX, endY)],
                          fill=color, outline=(255, 255, 255))
 
-    result.save('palette.png')
+    absolute_path = os.path.abspath("palette.png")
+
+    result.save(absolute_path)
 
     return hex_arr
 
@@ -109,6 +116,7 @@ def create_palette(img):
 def upload_image_cloudinary(file_name):
     uploaded_image = cloudinary.uploader.upload(file=file_name,
                                                 use_filename=True,
+                                                unique_filename = False,
                                                 folder='/ColorsOfBerlin')
 
     image_url = uploaded_image['secure_url']
