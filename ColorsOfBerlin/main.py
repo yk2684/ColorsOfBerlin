@@ -4,19 +4,19 @@ ColorsOfBerlin python script.
 Yukino Kondo
 """
 
-import credentials
 import urllib.request
 from datetime import datetime
+import json
+import os
+import credentials
 import cloudinary.uploader
 import cloudinary
 from PIL import Image, ImageDraw
-import json
 import requests
 import smtplib
 from sklearn.cluster import KMeans
 import cv2 as cv
 import numpy as np
-import os
 
 # Configuration for the Cloudinary platform
 cloudinary.config(
@@ -196,5 +196,4 @@ def main():
 
 
 if __name__ == '__main__':
-    # pylint: disable=no-value-for-parameter
     main()
