@@ -8,15 +8,15 @@ import urllib.request
 from datetime import datetime
 import json
 import os
-import credentials
+from smtplib import SMTP, SMTPException
+import requests
 import cloudinary.uploader
 import cloudinary
 from PIL import Image, ImageDraw
-import requests
-import smtplib
 from sklearn.cluster import KMeans
 import cv2 as cv
 import numpy as np
+import credentials
 
 # Configuration for the Cloudinary platform
 cloudinary.config(
@@ -27,6 +27,10 @@ cloudinary.config(
 
 
 def pull_image():
+    """
+    Pulls webcam image from windy and saves a temporary local copy to use later.
+    """
+
     url = 'https://api.windy.com/api/webcams/v2/list/webcam=1511479029?show=webcams:image'
     headers = {'x-windy-key': credentials.api_key}
 
@@ -36,24 +40,31 @@ def pull_image():
     daylight_image = req.json(
     )['result']['webcams'][0]['image']['current']['preview']
 
-    URL = daylight_image
+    url = daylight_image
 
-    #file_name_org_img = datetime.today().strftime('%Y-%m-%d') + '.jpg'
+    # file_name_org_img = datetime.today().strftime('%Y-%m-%d') + '.jpg'
 
     absolute_path = os.path.abspath('temp.jpg')
 
-    with urllib.request.urlopen(URL) as url:
+    with urllib.request.urlopen(url) as url:
         with open(absolute_path, 'wb') as f:
             f.write(url.read())
 
     return f.name
 
 
-def rgb_to_hex(tuple):
-    return '#%02x%02x%02x' % (tuple)
+def rgb_to_hex(rgb_values):
+    """
+    Converts RGB values to HEX values.
+    """
+    # pylint: disable=consider-using-f-string
+    return '#%02x%02x%02x' % (rgb_values)
 
 
 def extract_dom_colors(img, color_count):
+    """
+    Extracts dominant colors using the KMeans clustering method.
+    """
     # Read in image
     img = cv.imread(img)
     # Convert image from BGR to RGB for color quantization
@@ -66,8 +77,9 @@ def extract_dom_colors(img, color_count):
     # Get number of colors
     palette = len(np.unique(km.labels_))
     # Create a histogram of the number of pixels assigned to each cluster
-    hist, bins = np.histogram(km.labels_, bins=np.arange(0, palette + 1))
+    hist = np.histogram(km.labels_, bins=np.arange(0, palette + 1))
     # Convert to float to divide a float from the array
+    # pylint: disable=no-member
     hist = hist.astype('float64')
     # Normalize histogram to get the percentage of a color/cluster present in image
     hist /= hist.sum()
@@ -76,6 +88,9 @@ def extract_dom_colors(img, color_count):
 
 
 def create_palette(img):
+    """
+    Using the colors extracted by KMeans, create an image with the colors.
+    """
     hist, palette, cluster_centers = extract_dom_colors(img, 5)
 
     # Preparing canvas
@@ -96,14 +111,14 @@ def create_palette(img):
         # The idea is to increase width of color based on their percentage present in image
         # The most dominant color in the image will have a wider width on canvas
         percent_width = int(percent * width)
-        endY = height
+        end_y = height
         if i == 0:
-            startX = 0
-            startY = 0
+            start_x = 0
+            start_y = 0
         else:
-            startX = endX
-        endX = startX + percent_width
-        canvas.rectangle([(startX, startY), (endX, endY)],
+            start_x = end_x
+        end_x = start_x + percent_width
+        canvas.rectangle([(start_x, start_y), (end_x, end_y)],
                          fill=color, outline=(255, 255, 255))
 
     absolute_path = os.path.abspath("palette.png")
@@ -114,9 +129,12 @@ def create_palette(img):
 
 
 def upload_image_cloudinary(file_name):
+    """
+    Upload the color palette image to cloudinary.
+    """
     uploaded_image = cloudinary.uploader.upload(file=file_name,
                                                 use_filename=True,
-                                                unique_filename = False,
+                                                unique_filename=False,
                                                 folder='/ColorsOfBerlin')
 
     image_url = uploaded_image['secure_url']
@@ -126,10 +144,12 @@ def upload_image_cloudinary(file_name):
 
 
 def upload_insta(url, hex_val):
+    """
+    Uploads the hosted image to instagram with the hex value in the comments.
+    """
     hex_str = ' '.join(hex_val)
 
-    post_url = 'https://graph.facebook.com/v12.0/{}/media'.format(
-        credentials.ig_user_id)
+    post_url = 'https://graph.facebook.com/v12.0/{credentials.ig_user_id}/media'
 
     payload = {
         'image_url': url,
@@ -144,8 +164,7 @@ def upload_insta(url, hex_val):
     if 'id' in result:
         creation_id = result['id']
 
-        media_publish_url = 'https://graph.facebook.com/v12.0/{}/media_publish'.format(
-            credentials.ig_user_id)
+        media_publish_url = 'https://graph.facebook.com/v12.0/{credentials.ig_user_id}/media_publish'
 
         publish_payload = {
             'creation_id': creation_id,
@@ -156,32 +175,45 @@ def upload_insta(url, hex_val):
 
 
 def delete_img_cloudinary(public_id):
+    """
+    Deletes image from cloudinary to save some space.
+    """
     cloudinary.uploader.destroy(public_id)
 
 
 def send_email(subject, body):
+    """
+    Send an email with subject and body text.
+    """
 
-    FROM = credentials.gmail_email
-    TO = credentials.gmail_email
-    SUBJECT = subject
-    TEXT = body
+    from_email = credentials.gmail_email
+    to_email = credentials.gmail_email
+    # pylint: disable=unused-variable
+    subject_text = subject
+    body_text = body
 
     # Prepare the message
-    message = """From: %s\nTo: %s\nSubject: %s\n\n%s""" % (
-        FROM, TO, SUBJECT, TEXT)
+    message = """From: {from_email}\nTo: {to_email}\nSubject: {subject_text}\n\n{body_text}"""
     try:
-        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server = SMTP("smtp.gmail.com", 587)
         server.ehlo()
         server.starttls()
         server.login(credentials.gmail_email, credentials.gmail_password)
-        server.sendmail(FROM, TO, message)
+        server.sendmail(from_email, to_email, message)
         server.close()
         print('Sent Mail')
-    except:
-        print("Failed to send mail")
-
+    except SMTPException:
+        print("Failed to send email")
 
 def main():
+    """
+    1. Pulls Image from Webcam
+    2. Creates a color palette by extracting dominant colors in an image
+    3. Uploads the color palette image to cloudinary
+    4. Pulls the color palette image from cloudinary and upload it to instagram (can only post on Instagram from a hosted site)
+    5. Delete the color palette image from cloudinary to save space
+    """
+
     try:
         img_file = pull_image()
         hex_val = create_palette(img_file)
@@ -190,6 +222,7 @@ def main():
         delete_img_cloudinary(public_id)
         print('Success!!')
 
+    # pylint: disable=broad-except
     except Exception as e:
         send_email('Colors of Berlin Failed', e)
         print(e)
