@@ -6,6 +6,7 @@ Yukino Kondo
 
 import urllib.request
 from datetime import datetime
+from datetime import timedelta
 import json
 import os
 from smtplib import SMTP, SMTPException
@@ -80,13 +81,13 @@ def extract_dom_colors(img, color_count):
     hist = np.histogram(km.labels_, bins=np.arange(0, palette + 1))
     # Convert to float to divide a float from the array
     # pylint: disable=no-member
-    hist = hist.astype('float64')
+    hist = hist[0].astype('float64')
     # Normalize histogram to get the percentage of a color/cluster present in image
     hist /= hist.sum()
 
     return hist, palette, km.cluster_centers_
 
-
+# pylint: disable=too-many-locals
 def create_palette(img):
     """
     Using the colors extracted by KMeans, create an image with the colors.
@@ -149,7 +150,7 @@ def upload_insta(url, hex_val):
     """
     hex_str = ' '.join(hex_val)
 
-    post_url = 'https://graph.facebook.com/v12.0/{credentials.ig_user_id}/media'
+    post_url = 'https://graph.facebook.com/v14.0/{credentials.ig_user_id}/media'
 
     payload = {
         'image_url': url,
@@ -164,7 +165,7 @@ def upload_insta(url, hex_val):
     if 'id' in result:
         creation_id = result['id']
 
-        media_publish_url = 'https://graph.facebook.com/v12.0/{credentials.ig_user_id}/media_publish'
+        media_publish_url = 'https://graph.facebook.com/v14.0/{credentials.ig_user_id}/media_publish'
 
         publish_payload = {
             'creation_id': creation_id,
@@ -172,7 +173,6 @@ def upload_insta(url, hex_val):
         }
 
         r = requests.post(media_publish_url, data=publish_payload)
-
 
 def delete_img_cloudinary(public_id):
     """
@@ -220,7 +220,8 @@ def main():
         image_url, public_id = upload_image_cloudinary('palette.png')
         upload_insta(image_url, hex_val)
         delete_img_cloudinary(public_id)
-        print('Success!!')
+        token_change_date_plus_60 = datetime.strptime('2022-06-06', '%Y-%m-%d') + timedelta(days=60)
+        print('Success!! Tokens expire on ' + str(token_change_date_plus_60))
 
     # pylint: disable=broad-except
     except Exception as e:
