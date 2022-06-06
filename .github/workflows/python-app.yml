@@ -4,13 +4,8 @@
 name: Python application
 
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-
-permissions:
-  contents: read
+  schedule:
+  - cron:  '00 13 * * *'
 
 jobs:
   build:
@@ -28,6 +23,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install pylint pytest
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: Test with pytest
+    - name: Run script
       run: |
-        pytest
+        python ./ColorsOfBerlin/main.py
