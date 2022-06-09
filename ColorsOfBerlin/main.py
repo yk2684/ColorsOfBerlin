@@ -17,13 +17,24 @@ from PIL import Image, ImageDraw
 from sklearn.cluster import KMeans
 import cv2 as cv
 import numpy as np
-import credentials
+
+# Using mapped secrets as env variables
+CLOUD_API_KEY = os.environ['CLOUD_API_KEY']
+CLOUD_API_SECRET = os.environ['CLOUD_API_SECRET']
+CLOUD_NAME = os.environ['CLOUD_NAME']
+GMAIL_EMAIL = os.environ['GMAIL_EMAIL']
+GMAIL_PASSWORD = os.environ['GMAIL_PASSWORD']
+IG_ACCESS_TOKEN = os.environ['IG_ACCESS_TOKEN']
+IG_PASSWORD = os.environ['IG_PASSWORD']
+IG_USERNAME = os.environ['IG_USERNAME']
+IG_USER_ID = os.environ['IG_USER_ID']
+WINDY_API_KEY = os.environ['WINDY_API_KEY']
 
 # Configuration for the Cloudinary platform
 cloudinary.config(
-    cloud_name=credentials.cloud_name,
-    api_key=credentials.cloud_api_key,
-    api_secret=credentials.cloud_api_secret,
+    cloud_name=CLOUD_NAME,
+    api_key=CLOUD_API_KEY,
+    api_secret=CLOUD_API_SECRET,
 )
 
 
@@ -33,7 +44,7 @@ def pull_image():
     """
 
     url = 'https://api.windy.com/api/webcams/v2/list/webcam=1511479029?show=webcams:image'
-    headers = {'x-windy-key': credentials.api_key}
+    headers = {'x-windy-key': WINDY_API_KEY}
 
     req = requests.get(url, headers=headers)
 
@@ -150,12 +161,12 @@ def upload_insta(url, hex_val):
     """
     hex_str = ' '.join(hex_val)
 
-    post_url = 'https://graph.facebook.com/v14.0/{credentials.ig_user_id}/media'
+    post_url = 'https://graph.facebook.com/v14.0/{IG_USER_ID}/media'
 
     payload = {
         'image_url': url,
         'caption': datetime.today().strftime('%Y-%m-%d') + "'s daytime colors:\n" + hex_str,
-        'access_token': credentials.access_token
+        'access_token': IG_ACCESS_TOKEN
     }
 
     r = requests.post(post_url, data=payload)
@@ -165,11 +176,11 @@ def upload_insta(url, hex_val):
     if 'id' in result:
         creation_id = result['id']
 
-        media_publish_url = 'https://graph.facebook.com/v14.0/{credentials.ig_user_id}/media_publish'
+        media_publish_url = 'https://graph.facebook.com/v14.0/{IG_USER_ID}/media_publish'
 
         publish_payload = {
             'creation_id': creation_id,
-            'access_token': credentials.access_token
+            'access_token': IG_ACCESS_TOKEN
         }
 
         r = requests.post(media_publish_url, data=publish_payload)
@@ -186,8 +197,8 @@ def send_email(subject, body):
     Send an email with subject and body text.
     """
 
-    from_email = credentials.gmail_email
-    to_email = credentials.gmail_email
+    from_email = GMAIL_EMAIL
+    to_email = GMAIL_EMAIL
     # pylint: disable=unused-variable
     subject_text = subject
     body_text = body
@@ -198,7 +209,7 @@ def send_email(subject, body):
         server = SMTP("smtp.gmail.com", 587)
         server.ehlo()
         server.starttls()
-        server.login(credentials.gmail_email, credentials.gmail_password)
+        server.login(GMAIL_EMAIL, GMAIL_PASSWORD)
         server.sendmail(from_email, to_email, message)
         server.close()
         print('Sent Mail')
