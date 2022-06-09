@@ -24,5 +24,16 @@ jobs:
         pip install pylint pytest
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Run script
+      env:
+          CLOUD_API_KEY: ${{secrets.CLOUD_API_KEY}}
+          CLOUD_API_SECRET: ${{secrets.CLOUD_API_SECRET}}
+          CLOUD_NAME: ${{secrets.CLOUD_NAME}}
+          GMAIL_EMAIL: ${{secrets.GMAIL_EMAIL}}
+          GMAIL_PASSWORD: ${{secrets.GMAIL_PASSWORD}}
+          IG_ACCESS_TOKEN: ${{secrets.IG_ACCESS_TOKEN}}
+          IG_PASSWORD: ${{secrets.IG_PASSWORD}}
+          IG_USERNAME: ${{secrets.IG_USERNAME}}
+          IG_USER_ID: ${{secrets.IG_USER_ID}}
+          WINDY_API_KEY: ${{secrets.WINDY_API_KEY}}
       run: |
         python ./ColorsOfBerlin/main.py
