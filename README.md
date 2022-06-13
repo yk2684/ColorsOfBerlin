@@ -1,8 +1,8 @@
 # ColorsOfBerlin
-Finds the dominant colors of an image from the Berlin West Skyline [webcam](https://www.windy.com/-Webcams/Germany/Berlin/webcams/1641364745?radar,52.477,13.116,11) and uploads to Instagram [@_colors.of.berlin_](https://www.instagram.com/_colors.of.berlin_/). The script runs on a daily basis from my local machine at 15:00 Berlin time. Dominant colors are extracted using the k-means clustering algorithm. The output image selects 5 dominant colors in an image which is weighted depending on the number of pixels assigned to each of the cluster/color.
+Finds the dominant colors of an image from the Berlin West Skyline [webcam](https://www.windy.com/-Webcams/Germany/Berlin/webcams/1641364745?radar,52.477,13.116,11) and uploads to Instagram [@_colors.of.berlin_](https://www.instagram.com/_colors.of.berlin_/). The script runs automatically using Github Actions at 13:00 Berlin time. Dominant colors are extracted using the k-means clustering algorithm. The output image selects 5 dominant colors in an image which is weighted depending on the number of pixels assigned to each of the cluster/color.
 
 ## Current Setup
-Currently, I am running the python script on my local device using crontab. Ideally, I would host the script on a site like Pythonanywhere, but this is a fun project in which I didn't want to spend any money on.
+The python script runs automatically using Github Actions.
 
 ## Installation
 ### Credentials Setup
@@ -19,7 +19,7 @@ pip install -r requirements.txt
 
 ### How to Run
 ```bash
-python ColorsOfBerlin/ColorsOfBerlin/main.py
+python ./ColorsOfBerlin/main.py
 ```
 
 ## Credits and Inspiration
