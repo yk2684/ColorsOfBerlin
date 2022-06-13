@@ -161,7 +161,7 @@ def upload_insta(url, hex_val):
     """
     hex_str = ' '.join(hex_val)
 
-    post_url = 'https://graph.facebook.com/v14.0/{IG_USER_ID}/media'
+    post_url = f'https://graph.facebook.com/v14.0/{IG_USER_ID}/media'
 
     payload = {
         'image_url': url,
@@ -176,7 +176,7 @@ def upload_insta(url, hex_val):
     if 'id' in result:
         creation_id = result['id']
 
-        media_publish_url = 'https://graph.facebook.com/v14.0/{IG_USER_ID}/media_publish'
+        media_publish_url = f'https://graph.facebook.com/v14.0/{IG_USER_ID}/media_publish'
 
         publish_payload = {
             'creation_id': creation_id,
@@ -204,7 +204,7 @@ def send_email(subject, body):
     body_text = body
 
     # Prepare the message
-    message = """From: {from_email}\nTo: {to_email}\nSubject: {subject_text}\n\n{body_text}"""
+    message = f"""From: {GMAIL_EMAIL}\nTo: {GMAIL_EMAIL}\nSubject: {subject_text}\n\n{body_text}"""
     try:
         server = SMTP("smtp.gmail.com", 587)
         server.ehlo()
