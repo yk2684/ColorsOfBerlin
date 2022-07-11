@@ -43,7 +43,7 @@ def pull_image():
     Pulls webcam image from windy and saves a temporary local copy to use later.
     """
 
-    url = 'https://api.windy.com/api/webcams/v2/list/webcam=1511479029?show=webcams:image'
+    url = 'https://api.windy.com/api/webcams/v2/list/webcam=1211725853?show=webcams:image'
     headers = {'x-windy-key': WINDY_API_KEY}
 
     req = requests.get(url, headers=headers)
