@@ -17,6 +17,8 @@ from PIL import Image, ImageDraw
 from sklearn.cluster import KMeans
 import cv2 as cv
 import numpy as np
+# https://github.com/cftang0827/sky-detector
+import detector
 
 # Using mapped secrets as env variables
 CLOUD_API_KEY = os.environ['CLOUD_API_KEY']
@@ -79,10 +81,14 @@ def extract_dom_colors(img, color_count):
     """
     # Read in image
     img = cv.imread(img)
+    # Detects the sky from an image from https://github.com/cftang0827/sky-detector
+    img = detector.get_sky_region_gradient(img)
     # Convert image from BGR to RGB for color quantization
     img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
     # Reshape the image to be a list of pixels
     X = img.reshape((-1, 3))
+    # Remove the black mask
+    X = np.delete(X, np.where(X == [0, 0, 0]), axis=0)
     # Using KMeans to cluster the color intensities
     km = KMeans(n_clusters=color_count)
     km.fit(X)
