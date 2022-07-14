@@ -1,5 +1,5 @@
 # ColorsOfBerlin
-Finds the dominant colors of an image from the Berlin West Skyline [webcam](https://www.windy.com/-Webcams/Germany/Berlin/webcams/1641364745?radar,52.477,13.116,11) and uploads to Instagram [@_colors.of.berlin_](https://www.instagram.com/_colors.of.berlin_/). The script runs automatically using Github Actions at 13:00 Berlin time. Dominant colors are extracted using the k-means clustering algorithm. The output image selects 5 dominant colors in an image which is weighted depending on the number of pixels assigned to each of the cluster/color.
+Finds the dominant colors of an image from the Berlin West Skyline [webcam](https://www.windy.com/-Webcams/Germany/Berlin/webcams/1641364745?radar,52.477,13.116,11) and uploads to Instagram [@_colors.of.berlin_](https://www.instagram.com/_colors.of.berlin_/). The script runs automatically using Github Actions at 13:00 Berlin time. Dominant colors are extracted using the k-means clustering algorithm. The sky is detected from the image assuming that the variance of sky is smaller than non-sky part. Then 5 dominant colors are selected from the output image without the non-sky elements which is weighted depending on the number of pixels assigned to each of the cluster/color.
 
 ## Current Setup
 The python script runs automatically using Github Actions.
@@ -24,3 +24,4 @@ python ./ColorsOfBerlin/main.py
 
 ## Credits and Inspiration
 - Idea comes from [laurendorman's Color of Berlin](https://github.com/laurendorman/color-of-berlin)
+- The Sky detector script is from [sky-detector](https://github.com/cftang0827/sky-detector)
