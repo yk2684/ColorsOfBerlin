@@ -19,7 +19,7 @@ import cv2 as cv
 import numpy as np
 # https://github.com/cftang0827/sky-detector
 import detector
-import credentials
+#import credentials
 
 # Using mapped secrets as env variables
 CLOUD_API_KEY = os.environ['CLOUD_API_KEY']
