@@ -19,6 +19,7 @@ import cv2 as cv
 import numpy as np
 # https://github.com/cftang0827/sky-detector
 import detector
+import credentials
 
 # Using mapped secrets as env variables
 CLOUD_API_KEY = os.environ['CLOUD_API_KEY']
@@ -32,6 +33,20 @@ IG_USERNAME = os.environ['IG_USERNAME']
 IG_USER_ID = os.environ['IG_USER_ID']
 WINDY_API_KEY = os.environ['WINDY_API_KEY']
 
+# testing purposes
+"""
+CLOUD_API_KEY = credentials.cloud_api_key
+CLOUD_API_SECRET = credentials.cloud_api_secret
+CLOUD_NAME = credentials.cloud_name
+GMAIL_EMAIL = credentials.gmail_email
+GMAIL_PASSWORD = credentials.gmail_password
+IG_ACCESS_TOKEN = credentials.access_token
+IG_PASSWORD = credentials.insta_password
+IG_USERNAME = credentials.insta_username
+IG_USER_ID = credentials.ig_user_id
+WINDY_API_KEY = credentials.api_key
+"""
+
 # Configuration for the Cloudinary platform
 cloudinary.config(
     cloud_name=CLOUD_NAME,
@@ -39,18 +54,17 @@ cloudinary.config(
     api_secret=CLOUD_API_SECRET,
 )
 
-
 def pull_image():
     """
     Pulls webcam image from windy and saves a temporary local copy to use later.
     """
 
-    url = 'https://api.windy.com/api/webcams/v2/list/webcam=1650186608?show=webcams:image'
+    url = 'https://api.windy.com/api/webcams/v2/list/webcam=1204999162?show=webcams:image'
     headers = {'x-windy-key': WINDY_API_KEY}
 
     req = requests.get(url, headers=headers)
 
-    # Pulling URL for the latest daylight image from the Berlin - Potsdamer Platz webcam
+    # Pulling URL for the latest daylight image from the Berlin webcam
     daylight_image = req.json(
     )['result']['webcams'][0]['image']['current']['preview']
 
@@ -160,27 +174,48 @@ def upload_image_cloudinary(file_name):
 
     return image_url, public_id
 
+post_url = f'https://graph.facebook.com/v14.0/{IG_USER_ID}/media'
+result_id = []
 
-def upload_insta(url, hex_val):
+def creates_item_container(url):
     """
-    Uploads the hosted image to instagram with the hex value in the comments.
+    Creates item containers in preperation to upload them to Instagram.
     """
-    hex_str = ' '.join(hex_val)
 
-    post_url = f'https://graph.facebook.com/v14.0/{IG_USER_ID}/media'
-
-    payload = {
+    # Creates item container
+    payload_1 = {
         'image_url': url,
-        'caption': datetime.today().strftime('%Y-%m-%d') + "'s daytime colors:\n" + hex_str,
+        'is_carousel_item': 'true',
         'access_token': IG_ACCESS_TOKEN
     }
 
-    r = requests.post(post_url, data=payload)
-
+    r = requests.post(post_url, data=payload_1)
     result = json.loads(r.text)
 
-    if 'id' in result:
-        creation_id = result['id']
+    result_id.append(result['id'])
+
+    return result_id
+
+def creates_carousel_container(result_id, hex_val):
+    """
+    Creates a carousel container and uploads the hosted image to instagram with the hex value in the comments.
+    """
+
+    hex_str = ' '.join(hex_val)
+    
+    # Creates carousel container 
+    payload_2 = {
+        'media_type': 'CAROUSEL',
+        'caption': datetime.today().strftime('%Y-%m-%d') + "'s daytime colors:\n" + hex_str,
+        'children': result_id,
+        'access_token': IG_ACCESS_TOKEN
+    }
+
+    r = requests.post(post_url, json=payload_2)
+    container_result = json.loads(r.text)
+
+    if 'id' in container_result:
+        creation_id = container_result['id']
 
         media_publish_url = f'https://graph.facebook.com/v14.0/{IG_USER_ID}/media_publish'
 
@@ -189,7 +224,7 @@ def upload_insta(url, hex_val):
             'access_token': IG_ACCESS_TOKEN
         }
 
-        r = requests.post(media_publish_url, data=publish_payload)
+        requests.post(media_publish_url, data=publish_payload)
 
 def delete_img_cloudinary(public_id):
     """
@@ -234,10 +269,13 @@ def main():
     try:
         img_file = pull_image()
         hex_val = create_palette(img_file)
-        image_url, public_id = upload_image_cloudinary('palette.png')
-        upload_insta(image_url, hex_val)
-        delete_img_cloudinary(public_id)
-        token_change_date_plus_60 = datetime.strptime('2022-06-06', '%Y-%m-%d') + timedelta(days=60)
+        for i in ['palette.png','temp.jpg']:
+            image_url, public_id = upload_image_cloudinary(i)
+            result_id = creates_item_container(image_url)
+            delete_img_cloudinary(public_id)
+        creates_carousel_container(result_id, hex_val)
+
+        token_change_date_plus_60 = datetime.strptime('2023-05-04', '%Y-%m-%d') + timedelta(days=60)
         print('Success!! Tokens expire on ' + str(token_change_date_plus_60))
 
     # pylint: disable=broad-except
