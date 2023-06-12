@@ -59,7 +59,7 @@ def pull_image():
     Pulls webcam image from windy and saves a temporary local copy to use later.
     """
     # Potsdamer Platz Webcam Number: 1204999162
-    url = 'https://api.windy.com/api/webcams/v2/list/webcam=1260635090?show=webcams:image'
+    url = 'https://api.windy.com/api/webcams/v2/list/webcam=1597905422?show=webcams:image'
     headers = {'x-windy-key': WINDY_API_KEY}
 
     req = requests.get(url, headers=headers)
